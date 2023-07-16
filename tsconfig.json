@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+      "rootDir": "src",
+      "outDir": "built",
+      "module": "commonjs",
+      "lib": ["ES2015", "DOM"]
+    }
+  }
