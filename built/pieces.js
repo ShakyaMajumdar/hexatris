@@ -79,3 +79,17 @@ var pieceCoords300 = new Map([
     ["J", function (x) { return [x, NE(x), N(NE(x)), SE(NE(x))]; }],
 ]);
 var pieceCoords = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300];
+var PieceBag = /** @class */ (function () {
+    function PieceBag(pieces) {
+        this.pieces = pieces;
+    }
+    PieceBag.random = function (bagSize) {
+        return new this(Array.from({ length: bagSize }, randomPiece));
+    };
+    PieceBag.prototype.next = function () {
+        var res = this.pieces.shift();
+        this.pieces.push(randomPiece());
+        return res;
+    };
+    return PieceBag;
+}());

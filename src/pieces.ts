@@ -90,3 +90,18 @@ const pieceCoords300 = new Map<Piece, PieceGenerator>([
 ])
 
 const pieceCoords = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300]
+
+class PieceBag {
+    pieces: Piece[];
+    constructor(pieces: Piece[]) {
+        this.pieces = pieces;
+    }
+    static random(bagSize: number) {
+        return new this(Array.from({ length: bagSize }, randomPiece))
+    }
+    next() {
+        let res = this.pieces.shift();
+        this.pieces.push(randomPiece())
+        return res;
+    }
+}
