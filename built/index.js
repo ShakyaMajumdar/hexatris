@@ -82,10 +82,10 @@ var PieceBag = /** @class */ (function () {
         return new this(Array.from({ length: BAG_SIZE }, randomPiece));
     };
     PieceBag.prototype.next = function () {
-        // let res = this.pieces.shift();
-        // this.pieces.push(randomPiece())
-        // return res;
-        return "F";
+        var res = this.pieces.shift();
+        this.pieces.push(randomPiece());
+        return res;
+        // return <Piece>"A"
     };
     return PieceBag;
 }());
@@ -225,11 +225,12 @@ var main = function () {
                 fallingType = bag.next();
                 fallingCoords = spawnPiece(grid, fallingType);
                 canHold = true;
+                var nRemoves = 0;
                 for (var r0 = ROWS - 1; r0 >= 0; r0--) {
                     var r1 = void 0;
-                    if (!grid[0][r0].every(function (hex) { return hex.state === CellState.Filled; }))
+                    if (grid[0][r0] && !grid[0][r0].every(function (hex) { return hex.state === CellState.Filled; }))
                         continue;
-                    if (grid[1][r0].every(function (hex) { return hex.state === CellState.Filled; })) {
+                    if (grid[1][r0] && grid[1][r0].every(function (hex) { return hex.state === CellState.Filled; })) {
                         r1 = r0;
                     }
                     else if (r0 > 0 && grid[1][r0 - 1].every(function (hex) { return hex.state === CellState.Filled; })) {
@@ -237,11 +238,12 @@ var main = function () {
                     }
                     else
                         continue;
-                    grid[0].splice(r0, 1);
-                    grid[0].unshift(Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }));
-                    grid[1].splice(r1, 1);
-                    grid[1].unshift(Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }));
+                    nRemoves++;
+                    grid[0][r0] = null;
+                    grid[1][r1] = null;
                 }
+                grid[0] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(grid[0].filter(Boolean));
+                grid[1] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(grid[1].filter(Boolean));
             }
         }
         grid.forEach(function (gr, g) { return gr.forEach(function (row, r) { return row.forEach(function (hex, c) { return hex.draw.apply(hex, __spreadArray([ctx], grcToXy([g, r, c]), false)); }); }); });
