@@ -10,7 +10,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 var spawnPiece = function (grid, name, rotationState, coord) {
     if (rotationState === void 0) { rotationState = 0; }
     if (coord === void 0) { coord = [0, 0, Math.floor(COLS / 4)]; }
-    var coords = pieceCoords[rotationState].get(name)(coord);
+    var coords = PIECE_COORDS[rotationState].get(name)(coord);
     coords.forEach(function (coord) {
         grid[coord[0]][coord[1]][coord[2]] = new Hexagon(CellState.Falling, "#FF0000");
     });
@@ -35,7 +35,7 @@ var refPointTarget = function (coords, theta, grcXyLut) {
     return xyToGrc(rotated, grcXyLut);
 };
 var Game = /** @class */ (function () {
-    function Game(ctx, grid, bag, fallingType, rotationState, fallingCoords, heldType, framesPerDrop, framesSinceLastDrop, framesPerMove, framesSinceLastMove, canHold, grcXyLut) {
+    function Game(ctx, grid, bag, fallingType, rotationState, fallingCoords, heldType, framesPerSoftDrop, framesSinceLastSoftDrop, framesPerMove, framesSinceLastMove, canHold, grcXyLut) {
         this.ctx = ctx;
         this.grid = grid;
         this.bag = bag;
@@ -43,130 +43,131 @@ var Game = /** @class */ (function () {
         this.rotationState = rotationState;
         this.fallingCoords = fallingCoords;
         this.heldType = heldType;
-        this.framesPerDrop = framesPerDrop;
-        this.framesSinceLastDrop = framesSinceLastDrop;
+        this.framesPerSoftDrop = framesPerSoftDrop;
+        this.framesSinceLastSoftDrop = framesSinceLastSoftDrop;
         this.framesPerMove = framesPerMove;
         this.framesSinceLastMove = framesSinceLastMove;
         this.canHold = canHold;
         this.grcXyLut = grcXyLut;
     }
-    Game.prototype.update = function () {
+    Game.prototype.translate = function (fn) {
         var _this = this;
+        this.framesSinceLastMove = 0;
+        return this.fallingCoords.map(function (coord) { return maybeNewCoord(_this.grid, coord, fn); });
+    };
+    Game.prototype.rotate = function (thetaIndex) {
+        var _this = this;
+        this.framesSinceLastMove = 0;
+        this.rotationState = (this.rotationState + thetaIndex) % 6;
+        return PIECE_COORDS[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, thetaIndex * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+    };
+    Game.prototype.tryMove = function (coords) {
+        var _this = this;
+        if (!coords.every(Boolean)) {
+            return null;
+        }
+        // all falling hexagons have their desired new positions available
+        this.fallingCoords.forEach(function (_a) {
+            var g = _a[0], r = _a[1], c = _a[2];
+            _this.grid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
+        });
+        coords.forEach(function (_a) {
+            var g = _a[0], r = _a[1], c = _a[2];
+            _this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000");
+        });
+        this.fallingCoords = coords;
+        return coords;
+    };
+    Game.prototype.removeFilledLines = function () {
+        var nRemoves = 0;
+        for (var r0 = ROWS - 1; r0 >= 0; r0--) {
+            var r1 = void 0;
+            if (this.grid[0][r0] && !this.grid[0][r0].every(function (hex) { return hex.state === CellState.Filled; }))
+                continue;
+            if (this.grid[1][r0] && this.grid[1][r0].every(function (hex) { return hex.state === CellState.Filled; })) {
+                r1 = r0;
+            }
+            else if (r0 > 0 && this.grid[1][r0 - 1].every(function (hex) { return hex.state === CellState.Filled; })) {
+                r1 = r0 - 1;
+            }
+            else
+                continue;
+            nRemoves++;
+            this.grid[0][r0] = null;
+            this.grid[1][r1] = null;
+        }
+        this.grid[0] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(this.grid[0].filter(Boolean));
+        this.grid[1] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(this.grid[1].filter(Boolean));
+    };
+    Game.prototype.tryMoveOrElse = function (coords, fn) {
+        if (this.tryMove(coords))
+            return;
+        else {
+            fn();
+        }
+    };
+    Game.prototype.freeze = function () {
+        var _this = this;
+        this.fallingCoords.forEach(function (_a) {
+            var g = _a[0], r = _a[1], c = _a[2];
+            _this.grid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
+        });
+        this.framesSinceLastSoftDrop = this.framesSinceLastMove = 0;
+        this.fallingType = this.bag.next();
+        this.fallingCoords = spawnPiece(this.grid, this.fallingType);
+        this.canHold = true;
+        this.removeFilledLines();
+    };
+    Game.prototype.update = function () {
         var _a;
-        var shouldFreeze = false;
-        var maybeNewCoords = null;
-        this.framesSinceLastDrop++;
+        var _this = this;
+        var _b;
+        this.framesSinceLastSoftDrop++;
         this.framesSinceLastMove++;
-        if (this.framesSinceLastDrop >= this.framesPerDrop) {
-            this.framesSinceLastDrop = 0;
-            shouldFreeze = true;
-            maybeNewCoords = this.fallingCoords.map(function (coord) { return maybeNewCoord(_this.grid, coord, (function (coord) { var g = coord[0], r = coord[1], c = coord[2]; return [g, r + 1, c]; })); });
+        if (this.framesSinceLastSoftDrop >= this.framesPerSoftDrop) {
+            this.framesSinceLastSoftDrop = 0;
+            this.tryMoveOrElse(this.translate(S), function () { return _this.freeze(); });
+            return;
         }
         else if (this.framesSinceLastMove >= this.framesPerMove) {
             if (pressedKeys["ArrowLeft"]) {
-                this.framesSinceLastMove = 0;
-                maybeNewCoords = this.fallingCoords.map(function (coord) { return maybeNewCoord(_this.grid, coord, (function (coord) { var g = coord[0], r = coord[1], c = coord[2]; return [1 - g, r + g, c - (1 - g)]; })); });
+                this.tryMove(this.translate(SW));
             }
             if (pressedKeys["ArrowRight"]) {
-                this.framesSinceLastMove = 0;
-                maybeNewCoords = this.fallingCoords.map(function (coord) { return maybeNewCoord(_this.grid, coord, (function (coord) { var g = coord[0], r = coord[1], c = coord[2]; return [1 - g, r + g, c + g]; })); });
+                this.tryMove(this.translate(SE));
             }
             if (pressedKeys["ArrowDown"]) {
-                this.framesSinceLastMove = 0;
-                maybeNewCoords = this.fallingCoords.map(function (coord) { return maybeNewCoord(_this.grid, coord, (function (coord) { var g = coord[0], r = coord[1], c = coord[2]; return [g, r + 1, c]; })); });
+                this.tryMove(this.translate(S));
             }
             if (pressedKeys["ArrowUp"]) {
-                this.framesSinceLastMove = 0;
-                this.rotationState = (this.rotationState + 1) % 6;
-                maybeNewCoords = pieceCoords[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, 1 * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+                this.tryMove(this.rotate(1));
             }
             if (pressedKeys["q"]) {
-                this.framesSinceLastMove = 0;
-                this.rotationState = (this.rotationState + 2) % 6;
-                maybeNewCoords = pieceCoords[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, 2 * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+                this.tryMove(this.rotate(2));
             }
             if (pressedKeys["a"]) {
-                this.framesSinceLastMove = 0;
-                this.rotationState = (this.rotationState + 3) % 6;
-                maybeNewCoords = pieceCoords[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, 3 * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+                this.tryMove(this.rotate(3));
             }
             if (pressedKeys["e"]) {
-                this.framesSinceLastMove = 0;
-                this.rotationState = (this.rotationState + 4) % 6;
-                maybeNewCoords = pieceCoords[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, 4 * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+                this.tryMove(this.rotate(4));
             }
             if (pressedKeys["z"]) {
-                this.framesSinceLastMove = 0;
-                this.rotationState = (this.rotationState + 5) % 6;
-                maybeNewCoords = pieceCoords[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, 5 * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+                this.tryMove(this.rotate(5));
             }
             if (pressedKeys[" "]) {
-                var fallingCoordsCopy = this.fallingCoords;
                 while (true) {
-                    maybeNewCoords = fallingCoordsCopy.map(function (coord) { return maybeNewCoord(_this.grid, coord, (function (coord) { var g = coord[0], r = coord[1], c = coord[2]; return [g, r + 1, c]; })); });
-                    if (maybeNewCoords.every(Boolean))
-                        fallingCoordsCopy = maybeNewCoords;
-                    else {
-                        maybeNewCoords = fallingCoordsCopy;
-                        shouldFreeze = true;
-                        break;
+                    if (!this.tryMove(this.translate(S))) {
+                        this.freeze();
+                        return;
                     }
                 }
-                shouldFreeze = true;
             }
             if (pressedKeys["Shift"] && this.canHold) {
                 this.canHold = false;
-                var newFallingType = (_a = this.heldType) !== null && _a !== void 0 ? _a : this.bag.next();
-                maybeNewCoords = spawnPiece(this.grid, newFallingType);
-                this.heldType = this.fallingType;
-                this.fallingType = newFallingType;
+                _a = [this.fallingType, (_b = this.heldType) !== null && _b !== void 0 ? _b : this.bag.next()], this.heldType = _a[0], this.fallingType = _a[1];
+                this.tryMove(spawnPiece(this.grid, this.fallingType));
             }
         }
-        if (maybeNewCoords) {
-            if (maybeNewCoords.every(Boolean)) {
-                // all falling hexagons have their desired new positions available
-                this.fallingCoords.forEach(function (coord) {
-                    var g = coord[0], r = coord[1], c = coord[2];
-                    _this.grid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
-                });
-                maybeNewCoords.forEach(function (coord) {
-                    var g = coord[0], r = coord[1], c = coord[2];
-                    _this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000");
-                });
-                this.fallingCoords = maybeNewCoords;
-            }
-            else if (shouldFreeze) {
-                // some or all hexagons are unable to fall further; lock piece
-                this.fallingCoords.forEach(function (coord) {
-                    var g = coord[0], r = coord[1], c = coord[2];
-                    _this.grid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
-                });
-                this.framesSinceLastDrop = this.framesSinceLastMove = 0;
-                this.fallingType = this.bag.next();
-                this.fallingCoords = spawnPiece(this.grid, this.fallingType);
-                this.canHold = true;
-                var nRemoves = 0;
-                for (var r0 = ROWS - 1; r0 >= 0; r0--) {
-                    var r1 = void 0;
-                    if (this.grid[0][r0] && !this.grid[0][r0].every(function (hex) { return hex.state === CellState.Filled; }))
-                        continue;
-                    if (this.grid[1][r0] && this.grid[1][r0].every(function (hex) { return hex.state === CellState.Filled; })) {
-                        r1 = r0;
-                    }
-                    else if (r0 > 0 && this.grid[1][r0 - 1].every(function (hex) { return hex.state === CellState.Filled; })) {
-                        r1 = r0 - 1;
-                    }
-                    else
-                        continue;
-                    nRemoves++;
-                    this.grid[0][r0] = null;
-                    this.grid[1][r1] = null;
-                }
-                this.grid[0] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(this.grid[0].filter(Boolean));
-                this.grid[1] = Array.from({ length: nRemoves }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }).concat(this.grid[1].filter(Boolean));
-            }
-        }
-        this.render();
     };
     Game.prototype.render = function () {
         var _this = this;

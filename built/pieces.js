@@ -78,7 +78,7 @@ var pieceCoords300 = new Map([
     ["I", function (x) { return [x, S(x), SE(S(x)), S(SE(S(x)))]; }],
     ["J", function (x) { return [x, NE(x), N(NE(x)), SE(NE(x))]; }],
 ]);
-var pieceCoords = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300];
+var PIECE_COORDS = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300];
 var PieceBag = /** @class */ (function () {
     function PieceBag(pieces) {
         this.pieces = pieces;

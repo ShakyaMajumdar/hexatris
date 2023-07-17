@@ -47,6 +47,7 @@ const main = () => {
     const game = initGame()
     setInterval(() => {
         game.update()
+        game.render()
     }, 1000 / FPS)
 }
 

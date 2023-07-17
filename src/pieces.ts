@@ -89,7 +89,7 @@ const pieceCoords300 = new Map<Piece, PieceGenerator>([
     ["J", x => [x, NE(x), N(NE(x)), SE(NE(x))]],
 ])
 
-const pieceCoords = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300]
+const PIECE_COORDS = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300]
 
 class PieceBag {
     pieces: Piece[];

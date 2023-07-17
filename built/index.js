@@ -22,6 +22,7 @@ var main = function () {
     var game = initGame();
     setInterval(function () {
         game.update();
+        game.render();
     }, 1000 / FPS);
 };
 main();
