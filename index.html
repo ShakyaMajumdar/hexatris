@@ -4,9 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hexatris</title>
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid black;
+            display: block;  /* prevents scrollbar */
+            /* width: 100vw; */
+            /* height: 100vh; */
+        }
+     </style>
 </head>
 <body>
-    <canvas style="border: 2px solid black;"  height="533" width="233"></canvas>
+    <!-- <canvas style="border: 2px solid black;"  height="533" width="233"></canvas> -->
+    <canvas></canvas>
+    <script src="built/button.js"></script>
     <script src="built/hexagon.js"></script>
     <script src="built/coords.js"></script>
     <script src="built/pieces.js"></script>

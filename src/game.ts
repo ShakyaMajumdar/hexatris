@@ -1,3 +1,10 @@
+enum GameState {
+    NotStarted,
+    Playing,
+    Paused,
+    Ended
+}
+
 const spawnPiece = (grid: Hexagon[][][], name: Piece, rotationState: number = 0, coord: Grc = [0, 0, Math.floor(COLS / 4)]) => {
     const coords = PIECE_COORDS[rotationState].get(name)(coord)
 
@@ -29,8 +36,11 @@ const refPointTarget = (coords: Grc[], theta: number, grcXyLut: Map<Xy, Grc>) =>
 
 
 class Game {
+    backToMenuButton: Button;
     constructor(
         private ctx: CanvasRenderingContext2D,
+        private x: number, 
+        private y: number,
         private grid: Hexagon[][][],
         private bag: PieceBag,
         private fallingType: Piece,
@@ -42,10 +52,22 @@ class Game {
         private framesSinceLastSoftDrop: number,
         private framesPerMove: number,
         private framesSinceLastMove: number,
+        private framesBeforeHardDrop: number,
+        private framesSinceFreeze: number,
+
         private canHold: Boolean,
 
         private grcXyLut: Map<Xy, Grc>
-    ) { }
+    ) { 
+        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 250, 600, 500, 120, () => sceneManager.changeScene(initMenu()))
+    }
+    enter() { 
+        this.backToMenuButton.render()
+    }
+    exit() {
+        this.backToMenuButton.clear() 
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
+    }
     private translate(fn: (coord: Grc) => Grc) {
         this.framesSinceLastMove = 0;
         return this.fallingCoords.map(coord => maybeNewCoord(this.grid, coord, fn))
@@ -94,6 +116,7 @@ class Game {
         }
     }
     private freeze() {
+        this.framesSinceFreeze = 0;
         this.fallingCoords.forEach(([g, r, c]) => { this.grid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000") })
 
         this.framesSinceLastSoftDrop = this.framesSinceLastMove = 0;
@@ -108,6 +131,7 @@ class Game {
 
         this.framesSinceLastSoftDrop++;
         this.framesSinceLastMove++;
+        this.framesSinceFreeze++;
 
         if (this.framesSinceLastSoftDrop >= this.framesPerSoftDrop) {
             this.framesSinceLastSoftDrop = 0;
@@ -140,7 +164,7 @@ class Game {
             if (pressedKeys["z"]) {
                 this.tryMove(this.rotate(5))
             }
-            if (pressedKeys[" "]) {
+            if (pressedKeys[" "] && this.framesSinceFreeze > this.framesBeforeHardDrop) {
                 while (true) {
                     if (!this.tryMove(this.translate(S))) {
                         this.freeze()
@@ -157,6 +181,9 @@ class Game {
 
     }
     render() {
-        this.grid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => hex.draw(this.ctx, ...grcToXy([g, r, c])))))
+        this.grid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
+            let [rawX, rawY] = grcToXy([g, r, c])
+            hex.draw(this.ctx, this.x + rawX, this.y + rawY)
+        })))
     }
 }

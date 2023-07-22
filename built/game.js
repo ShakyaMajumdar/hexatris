@@ -1,12 +1,10 @@
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
+var GameState;
+(function (GameState) {
+    GameState[GameState["NotStarted"] = 0] = "NotStarted";
+    GameState[GameState["Playing"] = 1] = "Playing";
+    GameState[GameState["Paused"] = 2] = "Paused";
+    GameState[GameState["Ended"] = 3] = "Ended";
+})(GameState || (GameState = {}));
 var spawnPiece = function (grid, name, rotationState, coord) {
     if (rotationState === void 0) { rotationState = 0; }
     if (coord === void 0) { coord = [0, 0, Math.floor(COLS / 4)]; }
@@ -35,8 +33,10 @@ var refPointTarget = function (coords, theta, grcXyLut) {
     return xyToGrc(rotated, grcXyLut);
 };
 var Game = /** @class */ (function () {
-    function Game(ctx, grid, bag, fallingType, rotationState, fallingCoords, heldType, framesPerSoftDrop, framesSinceLastSoftDrop, framesPerMove, framesSinceLastMove, canHold, grcXyLut) {
+    function Game(ctx, x, y, grid, bag, fallingType, rotationState, fallingCoords, heldType, framesPerSoftDrop, framesSinceLastSoftDrop, framesPerMove, framesSinceLastMove, framesBeforeHardDrop, framesSinceFreeze, canHold, grcXyLut) {
         this.ctx = ctx;
+        this.x = x;
+        this.y = y;
         this.grid = grid;
         this.bag = bag;
         this.fallingType = fallingType;
@@ -47,9 +47,19 @@ var Game = /** @class */ (function () {
         this.framesSinceLastSoftDrop = framesSinceLastSoftDrop;
         this.framesPerMove = framesPerMove;
         this.framesSinceLastMove = framesSinceLastMove;
+        this.framesBeforeHardDrop = framesBeforeHardDrop;
+        this.framesSinceFreeze = framesSinceFreeze;
         this.canHold = canHold;
         this.grcXyLut = grcXyLut;
+        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth / 2 - 250, 600, 500, 120, function () { return sceneManager.changeScene(initMenu()); });
     }
+    Game.prototype.enter = function () {
+        this.backToMenuButton.render();
+    };
+    Game.prototype.exit = function () {
+        this.backToMenuButton.clear();
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    };
     Game.prototype.translate = function (fn) {
         var _this = this;
         this.framesSinceLastMove = 0;
@@ -108,6 +118,7 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.freeze = function () {
         var _this = this;
+        this.framesSinceFreeze = 0;
         this.fallingCoords.forEach(function (_a) {
             var g = _a[0], r = _a[1], c = _a[2];
             _this.grid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
@@ -124,6 +135,7 @@ var Game = /** @class */ (function () {
         var _b;
         this.framesSinceLastSoftDrop++;
         this.framesSinceLastMove++;
+        this.framesSinceFreeze++;
         if (this.framesSinceLastSoftDrop >= this.framesPerSoftDrop) {
             this.framesSinceLastSoftDrop = 0;
             this.tryMoveOrElse(this.translate(S), function () { return _this.freeze(); });
@@ -154,7 +166,7 @@ var Game = /** @class */ (function () {
             if (pressedKeys["z"]) {
                 this.tryMove(this.rotate(5));
             }
-            if (pressedKeys[" "]) {
+            if (pressedKeys[" "] && this.framesSinceFreeze > this.framesBeforeHardDrop) {
                 while (true) {
                     if (!this.tryMove(this.translate(S))) {
                         this.freeze();
@@ -171,7 +183,10 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.render = function () {
         var _this = this;
-        this.grid.forEach(function (gr, g) { return gr.forEach(function (row, r) { return row.forEach(function (hex, c) { return hex.draw.apply(hex, __spreadArray([_this.ctx], grcToXy([g, r, c]), false)); }); }); });
+        this.grid.forEach(function (gr, g) { return gr.forEach(function (row, r) { return row.forEach(function (hex, c) {
+            var _a = grcToXy([g, r, c]), rawX = _a[0], rawY = _a[1];
+            hex.draw(_this.ctx, _this.x + rawX, _this.y + rawY);
+        }); }); });
     };
     return Game;
 }());
