@@ -74,8 +74,11 @@ class Game {
     }
     private rotate(thetaIndex: number) {
         this.framesSinceLastMove = 0;
+        let rpt = refPointTarget(this.fallingCoords, thetaIndex * Math.PI / 3, this.grcXyLut)
+        if (!rpt)
+            return [null, null, null, null] as Grc[]
         this.rotationState = (this.rotationState + thetaIndex) % 6
-        return PIECE_COORDS[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, thetaIndex * Math.PI / 3, this.grcXyLut),).map(coord => maybeNewCoord(this.grid, coord, x => x))
+        return PIECE_COORDS[this.rotationState].get(this.fallingType)(rpt).map(coord => maybeNewCoord(this.grid, coord, x => x))
     }
     private tryMove(coords: Grc[]) {
         if (!coords.every(Boolean)) {
@@ -86,6 +89,11 @@ class Game {
         coords.forEach(([g, r, c]) => { this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000") })
         this.fallingCoords = coords;
         return coords;
+    }
+    private tryRotationMove(thetaIndex: number) {
+        let oldRotationState = this.rotationState;
+        if (!this.tryMove(this.rotate(thetaIndex)))
+            this.rotationState = oldRotationState
     }
     private removeFilledLines() {
         let nRemoves = 0;
@@ -150,7 +158,8 @@ class Game {
                 this.tryMove(this.translate(S))
             }
             if (pressedKeys["ArrowUp"]) {
-                this.tryMove(this.rotate(1))
+                // this.tryMove(this.rotate(1))
+                this.tryRotationMove(1)
             }
             if (pressedKeys["q"]) {
                 this.tryMove(this.rotate(2))

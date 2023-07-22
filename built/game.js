@@ -68,8 +68,11 @@ var Game = /** @class */ (function () {
     Game.prototype.rotate = function (thetaIndex) {
         var _this = this;
         this.framesSinceLastMove = 0;
+        var rpt = refPointTarget(this.fallingCoords, thetaIndex * Math.PI / 3, this.grcXyLut);
+        if (!rpt)
+            return [null, null, null, null];
         this.rotationState = (this.rotationState + thetaIndex) % 6;
-        return PIECE_COORDS[this.rotationState].get(this.fallingType)(refPointTarget(this.fallingCoords, thetaIndex * Math.PI / 3, this.grcXyLut)).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
+        return PIECE_COORDS[this.rotationState].get(this.fallingType)(rpt).map(function (coord) { return maybeNewCoord(_this.grid, coord, function (x) { return x; }); });
     };
     Game.prototype.tryMove = function (coords) {
         var _this = this;
@@ -87,6 +90,11 @@ var Game = /** @class */ (function () {
         });
         this.fallingCoords = coords;
         return coords;
+    };
+    Game.prototype.tryRotationMove = function (thetaIndex) {
+        var oldRotationState = this.rotationState;
+        if (!this.tryMove(this.rotate(thetaIndex)))
+            this.rotationState = oldRotationState;
     };
     Game.prototype.removeFilledLines = function () {
         var nRemoves = 0;
@@ -152,7 +160,8 @@ var Game = /** @class */ (function () {
                 this.tryMove(this.translate(S));
             }
             if (pressedKeys["ArrowUp"]) {
-                this.tryMove(this.rotate(1));
+                // this.tryMove(this.rotate(1))
+                this.tryRotationMove(1);
             }
             if (pressedKeys["q"]) {
                 this.tryMove(this.rotate(2));
