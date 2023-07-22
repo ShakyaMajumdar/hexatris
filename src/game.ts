@@ -59,14 +59,14 @@ class Game {
 
         private grcXyLut: Map<Xy, Grc>
     ) { 
-        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 250, 600, 500, 120, () => sceneManager.changeScene(initMenu()))
+        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 250, 500, 500, 120, () => sceneManager.changeScene(initMenu()))
     }
     enter() { 
         this.backToMenuButton.render()
     }
     exit() {
         this.backToMenuButton.clear() 
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
+        clearCanvas(this.ctx)
     }
     private translate(fn: (coord: Grc) => Grc) {
         this.framesSinceLastMove = 0;
@@ -190,9 +190,11 @@ class Game {
 
     }
     render() {
+        clearCanvas(this.ctx)
         this.grid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
             let [rawX, rawY] = grcToXy([g, r, c])
             hex.draw(this.ctx, this.x + rawX, this.y + rawY)
         })))
+        this.backToMenuButton.render()
     }
 }

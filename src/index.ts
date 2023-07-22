@@ -1,4 +1,4 @@
-const HEX_SIDE = 15;  //px
+const HEX_SIDE = 12;  //px
 const ROWS = 20;
 const COLS = 10;
 const FPS = 30;
@@ -52,7 +52,9 @@ class Menu {
         this.startGameButton.render()
     }
 }
-
+const clearCanvas = (ctx: CanvasRenderingContext2D) => {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+}
 const initMenu = () => {
     const ctx = canvas.getContext("2d")
 

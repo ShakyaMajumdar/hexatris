@@ -51,14 +51,14 @@ var Game = /** @class */ (function () {
         this.framesSinceFreeze = framesSinceFreeze;
         this.canHold = canHold;
         this.grcXyLut = grcXyLut;
-        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth / 2 - 250, 600, 500, 120, function () { return sceneManager.changeScene(initMenu()); });
+        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth / 2 - 250, 500, 500, 120, function () { return sceneManager.changeScene(initMenu()); });
     }
     Game.prototype.enter = function () {
         this.backToMenuButton.render();
     };
     Game.prototype.exit = function () {
         this.backToMenuButton.clear();
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        clearCanvas(this.ctx);
     };
     Game.prototype.translate = function (fn) {
         var _this = this;
@@ -192,10 +192,12 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.render = function () {
         var _this = this;
+        clearCanvas(this.ctx);
         this.grid.forEach(function (gr, g) { return gr.forEach(function (row, r) { return row.forEach(function (hex, c) {
             var _a = grcToXy([g, r, c]), rawX = _a[0], rawY = _a[1];
             hex.draw(_this.ctx, _this.x + rawX, _this.y + rawY);
         }); }); });
+        this.backToMenuButton.render();
     };
     return Game;
 }());

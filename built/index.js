@@ -1,4 +1,4 @@
-var HEX_SIDE = 15; //px
+var HEX_SIDE = 12; //px
 var ROWS = 20;
 var COLS = 10;
 var FPS = 30;
@@ -39,6 +39,9 @@ var Menu = /** @class */ (function () {
     };
     return Menu;
 }());
+var clearCanvas = function (ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+};
 var initMenu = function () {
     var ctx = canvas.getContext("2d");
     return new Menu(ctx);

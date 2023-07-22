@@ -28,11 +28,11 @@ class Button {
         this.ctx.fillStyle = this.textStyle;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.font = '30px arial';
+        this.ctx.font = '25px arial';
         this.ctx.fillText(this.text, this.x + this.width / 2, this.y + this.height / 2, this.width);
     }
     clear() {
         this.ctx.canvas.removeEventListener("click", this.handleClick)
-        this.ctx.clearRect(this.x, this.y, this.width, this.height)
+        clearCanvas(this.ctx)
     }
 }
