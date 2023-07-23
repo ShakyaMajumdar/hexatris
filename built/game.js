@@ -5,15 +5,6 @@ var GameState;
     GameState[GameState["Paused"] = 2] = "Paused";
     GameState[GameState["Ended"] = 3] = "Ended";
 })(GameState || (GameState = {}));
-var spawnPiece = function (grid, name, rotationState, coord) {
-    if (rotationState === void 0) { rotationState = 0; }
-    if (coord === void 0) { coord = [0, 0, Math.floor(COLS / 4)]; }
-    var coords = PIECE_COORDS[rotationState].get(name)(coord);
-    coords.forEach(function (coord) {
-        grid[coord[0]][coord[1]][coord[2]] = new Hexagon(CellState.Falling, "#FF0000");
-    });
-    return coords;
-};
 var maybeNewCoord = function (grid, coord, fn) {
     var ncoord = fn(coord);
     var ng = ncoord[0], nr = ncoord[1], nc = ncoord[2];
@@ -33,16 +24,12 @@ var refPointTarget = function (coords, theta, grcXyLut) {
     return xyToGrc(rotated, grcXyLut);
 };
 var Game = /** @class */ (function () {
-    function Game(ctx, x, y, grid, bag, fallingType, rotationState, fallingCoords, heldType, framesPerSoftDrop, framesSinceLastSoftDrop, framesPerMove, framesSinceLastMove, framesBeforeHardDrop, framesSinceFreeze, canHold, grcXyLut) {
+    function Game(ctx, x, y, grid, bag, framesPerSoftDrop, framesSinceLastSoftDrop, framesPerMove, framesSinceLastMove, framesBeforeHardDrop, framesSinceFreeze, canHold, grcXyLut) {
         this.ctx = ctx;
         this.x = x;
         this.y = y;
         this.grid = grid;
         this.bag = bag;
-        this.fallingType = fallingType;
-        this.rotationState = rotationState;
-        this.fallingCoords = fallingCoords;
-        this.heldType = heldType;
         this.framesPerSoftDrop = framesPerSoftDrop;
         this.framesSinceLastSoftDrop = framesSinceLastSoftDrop;
         this.framesPerMove = framesPerMove;
@@ -52,6 +39,10 @@ var Game = /** @class */ (function () {
         this.canHold = canHold;
         this.grcXyLut = grcXyLut;
         this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth / 2 - 250, 500, 500, 120, function () { return sceneManager.changeScene(initMenu()); });
+        this.fallingType = bag.next();
+        this.rotationState = 0;
+        this.fallingCoords = this.spawnPiece(this.fallingType);
+        this.heldType = null;
     }
     Game.prototype.enter = function () {
         this.backToMenuButton.render();
@@ -59,6 +50,23 @@ var Game = /** @class */ (function () {
     Game.prototype.exit = function () {
         this.backToMenuButton.clear();
         clearCanvas(this.ctx);
+    };
+    Game.prototype.spawnPiece = function (name, rotationState, coord) {
+        var _this = this;
+        if (rotationState === void 0) { rotationState = 0; }
+        if (coord === void 0) { coord = [0, 0, Math.floor(COLS / 4)]; }
+        var coords = PIECE_COORDS[rotationState].get(name)(coord);
+        coords.forEach(function (_a) {
+            var g = _a[0], r = _a[1], c = _a[2];
+            if (_this.grid[g][r][c].state == CellState.Filled)
+                _this.die();
+            _this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000");
+        });
+        return coords;
+    };
+    Game.prototype.die = function () {
+        // throw new Error("Method not implemented.");
+        sceneManager.changeScene(initGameOver(10));
     };
     Game.prototype.translate = function (fn) {
         var _this = this;
@@ -133,7 +141,7 @@ var Game = /** @class */ (function () {
         });
         this.framesSinceLastSoftDrop = this.framesSinceLastMove = 0;
         this.fallingType = this.bag.next();
-        this.fallingCoords = spawnPiece(this.grid, this.fallingType);
+        this.fallingCoords = this.spawnPiece(this.fallingType);
         this.canHold = true;
         this.removeFilledLines();
     };
@@ -186,7 +194,7 @@ var Game = /** @class */ (function () {
             if (pressedKeys["Shift"] && this.canHold) {
                 this.canHold = false;
                 _a = [this.fallingType, (_b = this.heldType) !== null && _b !== void 0 ? _b : this.bag.next()], this.heldType = _a[0], this.fallingType = _a[1];
-                this.tryMove(spawnPiece(this.grid, this.fallingType));
+                this.tryMove(this.spawnPiece(this.fallingType));
             }
         }
     };
@@ -194,6 +202,8 @@ var Game = /** @class */ (function () {
         var _this = this;
         clearCanvas(this.ctx);
         this.grid.forEach(function (gr, g) { return gr.forEach(function (row, r) { return row.forEach(function (hex, c) {
+            if (r < 2 && hex.state == CellState.Empty)
+                return;
             var _a = grcToXy([g, r, c]), rawX = _a[0], rawY = _a[1];
             hex.draw(_this.ctx, _this.x + rawX, _this.y + rawY);
         }); }); });

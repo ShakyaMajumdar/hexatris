@@ -64,7 +64,33 @@ var initGame = function () {
     var bag = PieceBag.random(BAG_SIZE);
     var grid = Array.from({ length: 2 }, function () { return Array.from({ length: ROWS }, function () { return Array.from({ length: Math.floor(COLS / 2) }, function () { return new Hexagon(CellState.Empty, "#FFFFFF"); }); }); });
     var fallingType = bag.next();
-    return new Game(canvas.getContext("2d"), window.innerWidth / 2 - (15 * 15 / 2), 20, grid, bag, fallingType, 0, spawnPiece(grid, fallingType), null, 50, 0, 7, 0, 20, 0, true, generateGrcXyLut(ROWS, COLS));
+    return new Game(canvas.getContext("2d"), window.innerWidth / 2 - (15 * 15 / 2), 20, grid, bag, 50, 0, 7, 0, 20, 0, true, generateGrcXyLut(ROWS, COLS));
+};
+var GameOver = /** @class */ (function () {
+    function GameOver(ctx, score) {
+        this.ctx = ctx;
+        this.score = score;
+        this.playAgainButton = new Button(this.ctx, "PLAY AGAIN", "#00FF00", "#000000", window.innerWidth / 2 - 150, 200, 300, 120, function () { return sceneManager.changeScene(initGame()); });
+        this.mainMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth / 2 - 150, 350, 300, 120, function () { return sceneManager.changeScene(initGame()); });
+    }
+    GameOver.prototype.enter = function () {
+        this.playAgainButton.render();
+        this.mainMenuButton.render();
+    };
+    GameOver.prototype.exit = function () {
+        this.playAgainButton.clear();
+        this.mainMenuButton.clear();
+    };
+    GameOver.prototype.update = function () {
+    };
+    GameOver.prototype.render = function () {
+        this.playAgainButton.render();
+        this.mainMenuButton.render();
+    };
+    return GameOver;
+}());
+var initGameOver = function (score) {
+    return new GameOver(canvas.getContext("2d"), score);
 };
 var main = function () {
     requestAnimationFrame(main);

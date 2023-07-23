@@ -5,14 +5,7 @@ enum GameState {
     Ended
 }
 
-const spawnPiece = (grid: Hexagon[][][], name: Piece, rotationState: number = 0, coord: Grc = [0, 0, Math.floor(COLS / 4)]) => {
-    const coords = PIECE_COORDS[rotationState].get(name)(coord)
 
-    coords.forEach((coord) => {
-        grid[coord[0]][coord[1]][coord[2]] = new Hexagon(CellState.Falling, "#FF0000")
-    })
-    return coords;
-}
 
 const maybeNewCoord = (grid: Hexagon[][][], coord: Grc, fn: (coord: Grc) => Grc) => {
     let ncoord = fn(coord);
@@ -36,17 +29,17 @@ const refPointTarget = (coords: Grc[], theta: number, grcXyLut: Map<Xy, Grc>) =>
 
 
 class Game {
-    backToMenuButton: Button;
+    private backToMenuButton: Button;
+    private fallingType: Piece;
+    private rotationState: number;
+    private fallingCoords: Grc[];
+    private heldType: Piece;
     constructor(
         private ctx: CanvasRenderingContext2D,
         private x: number, 
         private y: number,
         private grid: Hexagon[][][],
-        private bag: PieceBag,
-        private fallingType: Piece,
-        private rotationState: number,
-        private fallingCoords: Grc[],
-        private heldType: Piece,
+        private bag: PieceBag,        
 
         private framesPerSoftDrop: number,
         private framesSinceLastSoftDrop: number,
@@ -60,6 +53,10 @@ class Game {
         private grcXyLut: Map<Xy, Grc>
     ) { 
         this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 250, 500, 500, 120, () => sceneManager.changeScene(initMenu()))
+        this.fallingType = bag.next()
+        this.rotationState = 0
+        this.fallingCoords = this.spawnPiece(this.fallingType)
+        this.heldType = null
     }
     enter() { 
         this.backToMenuButton.render()
@@ -67,6 +64,20 @@ class Game {
     exit() {
         this.backToMenuButton.clear() 
         clearCanvas(this.ctx)
+    }
+    private spawnPiece(name: Piece, rotationState: number = 0, coord: Grc = [0, 0, Math.floor(COLS / 4)]) {
+        const coords = PIECE_COORDS[rotationState].get(name)(coord)
+    
+        coords.forEach(([g, r, c]) => {
+            if (this.grid[g][r][c].state == CellState.Filled)
+                this.die()
+            this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000")
+        })
+        return coords;
+    }
+    die() {
+        // throw new Error("Method not implemented.");
+        sceneManager.changeScene(initGameOver(10))
     }
     private translate(fn: (coord: Grc) => Grc) {
         this.framesSinceLastMove = 0;
@@ -130,7 +141,7 @@ class Game {
         this.framesSinceLastSoftDrop = this.framesSinceLastMove = 0;
 
         this.fallingType = this.bag.next()
-        this.fallingCoords = spawnPiece(this.grid, this.fallingType);
+        this.fallingCoords = this.spawnPiece(this.fallingType);
         this.canHold = true;
 
         this.removeFilledLines()
@@ -184,7 +195,7 @@ class Game {
             if (pressedKeys["Shift"] && this.canHold) {
                 this.canHold = false;
                 [this.heldType, this.fallingType] = [this.fallingType, this.heldType ?? this.bag.next()]
-                this.tryMove(spawnPiece(this.grid, this.fallingType));
+                this.tryMove(this.spawnPiece(this.fallingType));
             }
         }
 
@@ -192,6 +203,8 @@ class Game {
     render() {
         clearCanvas(this.ctx)
         this.grid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
+            if (r < 2 && hex.state == CellState.Empty)
+                return
             let [rawX, rawY] = grcToXy([g, r, c])
             hex.draw(this.ctx, this.x + rawX, this.y + rawY)
         })))

@@ -87,10 +87,6 @@ const initGame = () => {
         20,
         grid,
         bag,
-        fallingType,
-        0,
-        spawnPiece(grid, fallingType),
-        null,
         50,
         0,
         7,
@@ -102,6 +98,32 @@ const initGame = () => {
     )
 }
 
+class GameOver {
+    private playAgainButton: Button
+    private mainMenuButton: Button
+    constructor(private ctx: CanvasRenderingContext2D, private score: number) {
+        this.playAgainButton = new Button(this.ctx, "PLAY AGAIN", "#00FF00", "#000000", window.innerWidth/2 - 150, 200, 300, 120, () => sceneManager.changeScene(initGame()))
+        this.mainMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 150, 350, 300, 120, () => sceneManager.changeScene(initGame()))
+    }
+    enter(): void {
+        this.playAgainButton.render()
+        this.mainMenuButton.render()
+    }
+    exit(): void {
+        this.playAgainButton.clear()
+        this.mainMenuButton.clear()
+    }
+    update(): void {
+
+    }
+    render(): void {
+        this.playAgainButton.render()
+        this.mainMenuButton.render()
+    }
+}
+const initGameOver = (score: number) => {
+    return new GameOver(canvas.getContext("2d"), score)
+}
 
 const main = () => {
     requestAnimationFrame(main)
