@@ -73,10 +73,10 @@ class Game {
                 this.die()
             this.grid[g][r][c] = new Hexagon(CellState.Falling, "#FF0000")
         })
+        this.rotationState = rotationState;
         return coords;
     }
     die() {
-        // throw new Error("Method not implemented.");
         sceneManager.changeScene(initGameOver(10))
     }
     private translate(fn: (coord: Grc) => Grc) {
@@ -173,16 +173,16 @@ class Game {
                 this.tryRotationMove(1)
             }
             if (pressedKeys["q"]) {
-                this.tryMove(this.rotate(2))
+                this.tryRotationMove(2)
             }
             if (pressedKeys["a"]) {
-                this.tryMove(this.rotate(3))
+                this.tryRotationMove(3)
             }
             if (pressedKeys["e"]) {
-                this.tryMove(this.rotate(4))
+                this.tryRotationMove(4)
             }
             if (pressedKeys["z"]) {
-                this.tryMove(this.rotate(5))
+                this.tryRotationMove(5)
             }
             if (pressedKeys[" "] && this.framesSinceFreeze > this.framesBeforeHardDrop) {
                 while (true) {

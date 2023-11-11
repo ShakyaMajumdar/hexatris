@@ -83,17 +83,17 @@ const initGame = () => {
     let fallingType = bag.next()
     return new Game(
         canvas.getContext("2d"),
-        window.innerWidth/2 - (15*15/2),
-        20,
+        window.innerWidth/2 - (15*15/2),  // x
+        20,  // y
         grid,
         bag,
-        50,
-        0,
-        7,
-        0,
-        20,
-        0,
-        true,
+        50,  // frames per soft drop
+        0,  // frames since last soft drop
+        7,  // frames per move
+        0,  // frames since last move
+        20,  // frames before hard drop
+        0,  // frames since freeze
+        true,  //can hold
         generateGrcXyLut(ROWS, COLS)
     )
 }
