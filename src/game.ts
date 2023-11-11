@@ -39,6 +39,7 @@ class Game {
         private x: number, 
         private y: number,
         private grid: Hexagon[][][],
+        private holdGrid: Hexagon[][][],        
         private bag: PieceBag,        
 
         private framesPerSoftDrop: number,
@@ -218,6 +219,12 @@ class Game {
             if (pressedKeys["Shift"] && this.canHold) {
                 this.canHold = false;
                 [this.heldType, this.fallingType] = [this.fallingType, this.heldType ?? this.bag.next()]
+                this.holdGrid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
+                    this.holdGrid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
+                })))
+                PIECE_COORDS[0].get(this.heldType)([0, 2, 1]).forEach(([g,r,c])=>{
+                    this.holdGrid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
+                })
                 this.tryMove(this.spawnPiece(this.fallingType));
             }
         }
@@ -230,6 +237,10 @@ class Game {
                 return
             let [rawX, rawY] = grcToXy([g, r, c])
             hex.draw(this.ctx, this.x + rawX, this.y + rawY)
+        })))
+        this.holdGrid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
+            let [rawX, rawY] = grcToXy([g, r, c])
+            hex.draw(this.ctx, this.x - 150 + rawX, this.y+ rawY)
         })))
         this.backToMenuButton.render()
     }

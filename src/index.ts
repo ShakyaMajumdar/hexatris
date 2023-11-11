@@ -80,12 +80,20 @@ const initGame = () => {
             )
         )
     )
+    let holdGrid = Array.from({ length: 2 },
+        () => Array.from({ length: 6 },
+            () => Array.from({ length: 3 },
+                () => new Hexagon(CellState.Empty, "#FFFFFF")
+            )
+        )
+    )
     let fallingType = bag.next()
     return new Game(
         canvas.getContext("2d"),
         window.innerWidth/2 - (15*15/2),  // x
         20,  // y
         grid,
+        holdGrid,
         bag,
         50,  // frames per soft drop
         0,  // frames since last soft drop
