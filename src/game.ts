@@ -53,7 +53,7 @@ class Game {
 
         private grcXyLut: Map<Xy, Grc>
     ) { 
-        this.backToMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 250, 500, 500, 120, () => sceneManager.changeScene(initMenu()))
+        this.backToMenuButton = new Button(this.ctx, "Back To Main Menu", "#53917e", "#fcd0a1", window.innerWidth/2 - 120, 500, 240, 60, () => sceneManager.changeScene(initMenu()))
         this.fallingType = bag.next()
         this.rotationState = 0
         this.fallingCoords = this.spawnPiece(this.fallingType)
@@ -243,5 +243,19 @@ class Game {
             hex.draw(this.ctx, this.x - 150 + rawX, this.y+ rawY)
         })))
         this.backToMenuButton.render()
+        this.ctx.font = "20px serif";
+        this.ctx.fillStyle = "#000000"
+        this.ctx.fillText("Controls:", this.x + 450, this.y + 50);
+        this.ctx.fillText("Left: Left Arrow", this.x + 450, this.y + 75);
+        this.ctx.fillText("Right: Right Arrow", this.x + 450, this.y + 100);
+        this.ctx.fillText("Soft Drop: Down Arrow", this.x + 450, this.y + 125);
+        this.ctx.fillText("Hard Drop: Spacebar", this.x + 450, this.y + 150);
+        this.ctx.fillText("Hold: Shift", this.x + 450, this.y + 175);
+        this.ctx.fillText("Rotate 60: Up Arrow", this.x + 450, this.y + 200);
+        this.ctx.fillText("Rotate 120: Q", this.x + 450, this.y + 225);
+        this.ctx.fillText("Rotate 180: A", this.x + 450, this.y + 250);
+        this.ctx.fillText("Rotate -120: E", this.x + 450, this.y + 275);
+        this.ctx.fillText("Rotate -60: Z", this.x + 450, this.y + 300);
+        
     }
 }

@@ -37,7 +37,7 @@ interface Scene {
 class Menu {
     startGameButton: Button
     constructor(private ctx: CanvasRenderingContext2D) {
-        this.startGameButton = new Button(this.ctx, "START GAME", "#00FF00", "#000000", window.innerWidth/2 - 150, 200, 300, 120, () => sceneManager.changeScene(initGame()))
+        this.startGameButton = new Button(this.ctx, "Start Game", "#53917e", "#fcd0a1", window.innerWidth/2 - 75, 100, 150, 60, () => sceneManager.changeScene(initGame()))
     }
     enter(): void {
         this.startGameButton.render()
@@ -87,7 +87,7 @@ const initGame = () => {
             )
         )
     )
-    let fallingType = bag.next()
+    // let fallingType = bag.next()
     return new Game(
         canvas.getContext("2d"),
         window.innerWidth/2 - (15*15/2),  // x
@@ -110,8 +110,8 @@ class GameOver {
     private playAgainButton: Button
     private mainMenuButton: Button
     constructor(private ctx: CanvasRenderingContext2D, private score: number) {
-        this.playAgainButton = new Button(this.ctx, "PLAY AGAIN", "#00FF00", "#000000", window.innerWidth/2 - 150, 200, 300, 120, () => sceneManager.changeScene(initGame()))
-        this.mainMenuButton = new Button(this.ctx, "BACK TO MAIN MENU", "#00FF00", "#000000", window.innerWidth/2 - 150, 350, 300, 120, () => sceneManager.changeScene(initGame()))
+        this.playAgainButton = new Button(this.ctx, "Play Again", "#53917e", "#fcd0a1", window.innerWidth/2 - 75, 100, 150, 60, () => sceneManager.changeScene(initGame()))
+        this.mainMenuButton = new Button(this.ctx, "Back To Main Menu", "#53917e", "#fcd0a1", window.innerWidth/2 - 120, 175, 240, 60, () => sceneManager.changeScene(initMenu()))
     }
     enter(): void {
         this.playAgainButton.render()
