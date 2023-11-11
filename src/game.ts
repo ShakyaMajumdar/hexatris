@@ -146,12 +146,35 @@ class Game {
 
         this.removeFilledLines()
     }
+    private setGhost() {
+        let coords = this.fallingCoords;
+        let sCoords = coords.map(coord => maybeNewCoord(this.grid, coord, S));
+        while (sCoords.every(Boolean)) {
+            coords = sCoords;
+            sCoords = coords.map(coord => maybeNewCoord(this.grid, coord, S));
+        }
+        coords.forEach(([g, r, c]) => { 
+            if (this.grid[g][r][c].state == CellState.Empty) 
+                {this.grid[g][r][c] = new Hexagon(CellState.Ghost, "#660000")} 
+        })
+    }
     update() {
 
         this.framesSinceLastSoftDrop++;
         this.framesSinceLastMove++;
         this.framesSinceFreeze++;
-
+        
+        for (let g = 0; g < this.grid.length; g++) {
+            for (let r = 0; r < this.grid[g].length; r++) {
+                for (let c = 0; c < this.grid[g][r].length; c++) {
+                    if (this.grid[g][r][c].state == CellState.Ghost) {
+                        this.grid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
+                    }
+                }
+            }
+        }
+        this.setGhost()
+        
         if (this.framesSinceLastSoftDrop >= this.framesPerSoftDrop) {
             this.framesSinceLastSoftDrop = 0;
             this.tryMoveOrElse(this.translate(S), () => this.freeze())

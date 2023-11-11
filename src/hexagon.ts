@@ -2,6 +2,7 @@
 enum CellState {
     Empty,
     Falling,
+    Ghost,
     Filled
 }
 class Hexagon {
