@@ -184,10 +184,10 @@ class Game {
 
         else if (this.framesSinceLastMove >= this.framesPerMove) {
             if (pressedKeys["ArrowLeft"]) {
-                this.tryMove(this.translate(SW))
+                this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NW:SW))
             }
             if (pressedKeys["ArrowRight"]) {
-                this.tryMove(this.translate(SE))
+                this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NE:SE))
             }
             if (pressedKeys["ArrowDown"]) {
                 this.tryMove(this.translate(S))
