@@ -37,7 +37,7 @@ interface Scene {
 class Menu {
     startGameButton: Button
     constructor(private ctx: CanvasRenderingContext2D) {
-        this.startGameButton = new Button(this.ctx, "Start Game", "#53917e", "#fcd0a1", window.innerWidth/2 - 75, 100, 150, 60, () => sceneManager.changeScene(initGame()))
+        this.startGameButton = new Button(this.ctx, "Start Game!", "#53917e", "#fcd0a1", window.innerWidth/2 - 75, 100, 150, 60, () => sceneManager.changeScene(initGame()))
     }
     enter(): void {
         this.startGameButton.render()
