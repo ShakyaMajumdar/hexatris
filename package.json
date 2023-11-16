@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p ./public && tsc -p ./server",
-    "start": "npm run build && node ./server/built/index.js"
+    "start": "node ./server/built/index.js"
   },
   "keywords": [],
   "dependencies": {
