@@ -16,14 +16,21 @@ const maybeNewCoord = (grid: Hexagon[][][], coord: Grc, fn: (coord: Grc) => Grc)
         return null;
     return ncoord;
 }
+const calcCentroidXy = (coords: Grc[]) => {
+    let xys = coords.map(grcToXy)
+    let x0 = xys.reduce((acc, curr) => acc + curr[0], 0) / xys.length
+    let y0 = xys.reduce((acc, curr) => acc + curr[1], 0) / xys.length
+    return [x0, y0]
+}
 
 const refPointTarget = (coords: Grc[], theta: number, grcXyLut: Map<Xy, Grc>) => {
     let xy = grcToXy(coords[0])
     let [x, y] = xy
-    let xys = coords.map(coord => grcToXy(coord))
-    let x0 = xys.reduce((acc, curr) => acc + curr[0], 0) / xys.length
-    let y0 = xys.reduce((acc, curr) => acc + curr[1], 0) / xys.length
-    let rotated: Xy = [x0 + (x - x0) * Math.cos(theta) - (y - y0) * Math.sin(theta), (y0 + (y - y0) * Math.cos(theta) + (x - x0) * Math.sin(theta))]
+    let [x0, y0] = calcCentroidXy(coords)
+    let rotated: Xy = [
+        x0 + (x - x0) * Math.cos(theta) - (y - y0) * Math.sin(theta), 
+        y0 + (y - y0) * Math.cos(theta) + (x - x0) * Math.sin(theta)
+    ]
     return xyToGrc(rotated, grcXyLut);
 }
 
@@ -90,7 +97,13 @@ class Game {
         if (!rpt)
             return [null, null, null, null] as Grc[]
         this.rotationState = (this.rotationState + thetaIndex) % 6
-        return PIECE_COORDS[this.rotationState].get(this.fallingType)(rpt).map(coord => maybeNewCoord(this.grid, coord, x => x))
+        let newCoords = PIECE_COORDS[this.rotationState].get(this.fallingType)(rpt)
+        let currentCentroid = calcCentroidXy(this.fallingCoords);
+        
+        while (calcCentroidXy(newCoords)[1] < currentCentroid[1]) {
+            newCoords = newCoords.map(S)
+        }
+        return newCoords.map(coord => maybeNewCoord(this.grid, coord, x => x))
     }
     private tryMove(coords: Grc[]) {
         if (!coords.every(Boolean)) {
