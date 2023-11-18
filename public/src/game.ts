@@ -4,8 +4,30 @@ enum GameState {
     Paused,
     Ended
 }
-
-
+enum Move {
+    Left,
+    Right, 
+    SoftDrop,
+    HardDrop,
+    Rot60,
+    Rot120,
+    Rot180,
+    Rot240,
+    Rot300,
+    Hold
+}
+const keybinds = {
+    ArrowLeft: Move.Left,
+    ArrowRight: Move.Right,
+    ArrowDown: Move.SoftDrop,
+    " ": Move.HardDrop,
+    ArrowUp: Move.Rot60,
+    q: Move.Rot120,
+    a: Move.Rot180,
+    e: Move.Rot240,
+    z: Move.Rot300,
+    Shift: Move.Hold
+}
 
 const maybeNewCoord = (grid: Hexagon[][][], coord: Grc, fn: (coord: Grc) => Grc) => {
     let ncoord = fn(coord);
@@ -41,6 +63,7 @@ class Game {
     private rotationState: number;
     private fallingCoords: Grc[];
     private heldType: Piece;
+    private moveQueue: Move[];
     constructor(
         private ctx: CanvasRenderingContext2D,
         private x: number, 
@@ -65,12 +88,36 @@ class Game {
         this.rotationState = 0
         this.fallingCoords = this.spawnPiece(this.fallingType)
         this.heldType = null
+
+        this.moveQueue = []
+    }
+    handleKeydown = (e: KeyboardEvent) => {
+        switch (e.key) {
+            case "ArrowLeft":
+            case "ArrowRight":
+            case "ArrowDown":
+                this.moveQueue.push(keybinds[e.key])
+                break
+            case "ArrowUp":
+            case "q":
+            case "a":
+            case "e":
+            case "z":
+            case " ":
+            case "Shift":
+                if (!e.repeat) {
+                    this.moveQueue.push(keybinds[e.key])
+                }
+                break
+        }
     }
     enter() { 
         this.backToMenuButton.render()
+        document.addEventListener("keydown", this.handleKeydown)
     }
     exit() {
         this.backToMenuButton.clear() 
+        document.removeEventListener("keydown", this.handleKeydown)
         clearCanvas(this.ctx)
     }
     private spawnPiece(name: Piece, rotationState: number = 0, coord: Grc = [0, 0, Math.floor(COLS / 4)]) {
@@ -172,12 +219,7 @@ class Game {
                 {this.grid[g][r][c] = new Hexagon(CellState.Ghost, "#660000")} 
         })
     }
-    update() {
-
-        this.framesSinceLastSoftDrop++;
-        this.framesSinceLastMove++;
-        this.framesSinceFreeze++;
-        
+    private clearGhost() {
         for (let g = 0; g < this.grid.length; g++) {
             for (let r = 0; r < this.grid[g].length; r++) {
                 for (let c = 0; c < this.grid[g][r].length; c++) {
@@ -187,6 +229,66 @@ class Game {
                 }
             }
         }
+    }
+    private handleMoveQueue() {
+        moves: for (let move of this.moveQueue) {
+            switch (move) {
+                case Move.Left:
+                    this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NW:SW))
+                    break
+                case Move.Right:
+                    this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NE:SE))
+                    break
+                case Move.SoftDrop:
+                    this.tryMove(this.translate(S))
+                    break
+                case Move.Rot60:
+                    this.tryRotationMove(1)
+                    break
+                case Move.Rot120:
+                    this.tryRotationMove(2)
+                    break
+                case Move.Rot180:
+                    this.tryRotationMove(3)
+                    break
+                case Move.Rot240:
+                    this.tryRotationMove(4)
+                    break
+                case Move.Rot300:
+                    this.tryRotationMove(5)
+                    break
+                case Move.HardDrop:
+                    if (this.framesSinceFreeze < this.framesBeforeHardDrop) {
+                        break
+                    }
+                    while (true) {
+                        if (!this.tryMove(this.translate(S))) {
+                            this.freeze()
+                            continue moves;
+                        }
+                    }
+                case Move.Hold:
+                    if (!this.canHold) break;
+                    this.canHold = false;
+                    [this.heldType, this.fallingType] = [this.fallingType, this.heldType ?? this.bag.next()]
+                    this.holdGrid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
+                        this.holdGrid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
+                    })))
+                    PIECE_COORDS[0].get(this.heldType)([0, 2, 1]).forEach(([g,r,c])=>{
+                        this.holdGrid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
+                    })
+                    this.tryMove(this.spawnPiece(this.fallingType));
+                    break;
+            }
+        }
+    }
+    update() {
+
+        this.framesSinceLastSoftDrop++;
+        this.framesSinceLastMove++;
+        this.framesSinceFreeze++;
+        
+        this.clearGhost()
         this.setGhost()
         
         if (this.framesSinceLastSoftDrop >= this.framesPerSoftDrop) {
@@ -194,54 +296,10 @@ class Game {
             this.tryMoveOrElse(this.translate(S), () => this.freeze())
             return
         }
-
-        else if (this.framesSinceLastMove >= this.framesPerMove) {
-            if (pressedKeys["ArrowLeft"]) {
-                this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NW:SW))
-            }
-            if (pressedKeys["ArrowRight"]) {
-                this.tryMove(this.translate((this.fallingCoords[0][0]==0)?NE:SE))
-            }
-            if (pressedKeys["ArrowDown"]) {
-                this.tryMove(this.translate(S))
-            }
-            if (pressedKeys["ArrowUp"]) {
-                // this.tryMove(this.rotate(1))
-                this.tryRotationMove(1)
-            }
-            if (pressedKeys["q"]) {
-                this.tryRotationMove(2)
-            }
-            if (pressedKeys["a"]) {
-                this.tryRotationMove(3)
-            }
-            if (pressedKeys["e"]) {
-                this.tryRotationMove(4)
-            }
-            if (pressedKeys["z"]) {
-                this.tryRotationMove(5)
-            }
-            if (pressedKeys[" "] && this.framesSinceFreeze > this.framesBeforeHardDrop) {
-                while (true) {
-                    if (!this.tryMove(this.translate(S))) {
-                        this.freeze()
-                        return
-                    }
-                }
-            }
-            if (pressedKeys["Shift"] && this.canHold) {
-                this.canHold = false;
-                [this.heldType, this.fallingType] = [this.fallingType, this.heldType ?? this.bag.next()]
-                this.holdGrid.forEach((gr, g) => gr.forEach((row, r) => row.forEach((hex, c) => {
-                    this.holdGrid[g][r][c] = new Hexagon(CellState.Empty, "#FFFFFF");
-                })))
-                PIECE_COORDS[0].get(this.heldType)([0, 2, 1]).forEach(([g,r,c])=>{
-                    this.holdGrid[g][r][c] = new Hexagon(CellState.Filled, "#FF0000");
-                })
-                this.tryMove(this.spawnPiece(this.fallingType));
-            }
+        if (this.framesSinceLastMove >= this.framesPerMove) {
+            this.handleMoveQueue()
+            this.moveQueue = []
         }
-
     }
     render() {
         clearCanvas(this.ctx)

@@ -11,22 +11,6 @@ canvas.height = window.innerHeight;
 const cos60 = Math.cos(Math.PI / 3);
 const sin60 = Math.sin(Math.PI / 3);
 
-const pressedKeys = {}
-document.addEventListener("keydown", (e) => {
-    e.preventDefault()
-    pressedKeys[e.key] = true;
-})
-document.addEventListener("keyup", (e) => {
-    e.preventDefault()
-    pressedKeys[e.key] = false;
-})
-
-const mouseClicks = new Set<[number, number]>();
-document.addEventListener("mousedown", (e) => {
-    mouseClicks.add([e.x, e.y])
-})
-
-
 interface Scene {
     enter(): void;
     update(): void;
