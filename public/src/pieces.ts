@@ -1,5 +1,5 @@
-type Piece = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" // | "J"
-const pieceNames: Piece[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I"] //, "J"]
+type Piece = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+const pieceNames: Piece[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 const randomPiece = () => pieceNames[Math.floor(Math.random() * pieceNames.length)]
 type PieceGenerator = (coord: Grc) => Grc[]
 
@@ -20,8 +20,8 @@ const pieceCoords0 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, S(x), SE(x), S(SE(x))]],
     ["G", x => [x, SW(x), S(SW(x)), S(S(x))]],
     ["H", x => [x, SE(x), S(SE(x)), SE(S(SE(x)))]],
-    // ["I", x => [x, SW(x), S(SW(x)), SW(S(SW(x)))]],
-    ["I", x => [x, SE(x), NE(SE(x)), S(SE(x))]]
+    ["I", x => [x, SW(x), S(SW(x)), SW(S(SW(x)))]],
+    ["J", x => [x, SE(x), NE(SE(x)), S(SE(x))]]
 ])
 
 const pieceCoords60 = new Map<Piece, PieceGenerator>([
@@ -33,8 +33,8 @@ const pieceCoords60 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, S(x), SW(x), S(SW(x))]],
     ["G", x => [x, NW(x), SW(NW(x)), S(SW(NW(x)))]],
     ["H", x => [x, S(x), SW(S(x)), S(SW(S(x)))]],
-    // ["I", x => [x, NW(x), SW(NW(x)), NW(SW(NW(x)))]],
-    ["I", x => [x, S(x), SW(S(x)), SE(S(x))]],
+    ["I", x => [x, NW(x), SW(NW(x)), NW(SW(NW(x)))]],
+    ["J", x => [x, S(x), SW(S(x)), SE(S(x))]],
 ])
 
 const pieceCoords120 = new Map<Piece, PieceGenerator>([
@@ -46,8 +46,8 @@ const pieceCoords120 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, NW(x), SW(x), NW(SW(x))]],
     ["G", x => [x, N(x), NW(N(x)), SW(NW(N(x)))]],
     ["H", x => [x, SW(x), NW(SW(x)), SW(NW(SW(x)))]],
-    // ["I", x => [x, N(x), NW(N(x)), N(NW(N(x)))]],
-    ["I", x => [x, SW(x), NW(SW(x)), S(SW(x))]],
+    ["I", x => [x, N(x), NW(N(x)), N(NW(N(x)))]],
+    ["J", x => [x, SW(x), NW(SW(x)), S(SW(x))]],
 ])
 
 const pieceCoords180 = new Map<Piece, PieceGenerator>([
@@ -59,8 +59,8 @@ const pieceCoords180 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, N(x), NW(x), N(NW(x))]],
     ["G", x => [x, NE(x), N(NE(x)), NW(N(NE(x)))]],
     ["H", x => [x, NW(x), N(NW(x)), NW(N(NW(x)))]],
-    // ["I", x => [x, NE(x), N(NE(x)), NE(N(NE(x)))]],
-    ["I", x => [x, NW(x), N(NW(x)), SW(NW(x))]],
+    ["I", x => [x, NE(x), N(NE(x)), NE(N(NE(x)))]],
+    ["J", x => [x, NW(x), N(NW(x)), SW(NW(x))]],
 ])
 
 const pieceCoords240 = new Map<Piece, PieceGenerator>([
@@ -72,8 +72,8 @@ const pieceCoords240 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, N(x), NE(x), N(NE(x))]],
     ["G", x => [x, SE(x), NE(SE(x)), N(NE(SE(x)))]],
     ["H", x => [x, N(x), NE(N(x)), N(NE(N(x)))]],
-    // ["I", x => [x, SE(x), NE(SE(x)), SE(NE(SE(x)))]],
-    ["I", x => [x, N(x), NW(N(x)), NE(N(x))]],
+    ["I", x => [x, SE(x), NE(SE(x)), SE(NE(SE(x)))]],
+    ["J", x => [x, N(x), NW(N(x)), NE(N(x))]],
 ])
 
 const pieceCoords300 = new Map<Piece, PieceGenerator>([
@@ -85,23 +85,12 @@ const pieceCoords300 = new Map<Piece, PieceGenerator>([
     ["F", x => [x, SE(x), NE(x), SE(NE(x))]],
     ["G", x => [x, S(x), SE(S(x)), NE(SE(S(x)))]],
     ["H", x => [x, NE(x), SE(NE(x)), NE(SE(NE(x)))]],
-    // ["I", x => [x, S(x), SE(S(x)), S(SE(S(x)))]],
-    ["I", x => [x, NE(x), N(NE(x)), SE(NE(x))]],
+    ["I", x => [x, S(x), SE(S(x)), S(SE(S(x)))]],
+    ["J", x => [x, NE(x), N(NE(x)), SE(NE(x))]],
 ])
 
 const PIECE_COORDS = [pieceCoords0, pieceCoords60, pieceCoords120, pieceCoords180, pieceCoords240, pieceCoords300]
 
-const CENTROID_HEX_INDEX_LUT = new Map<Piece, number>([
-    ["A", 1],
-    ["B", 1],
-    ["C", 2],
-    ["D", 1],
-    ["E", 1],
-    ["F", 1],
-    ["G", 1],
-    ["H", 1],
-    ["I", 1],
-])
 class PieceBag {
     pieces: Piece[];
     constructor(pieces: Piece[]) {
